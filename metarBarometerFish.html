@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>METAR Barometer, Fish Or Not?</h2>
+
+<h1 id="result"></h1>
+
+<pre id="data"></pre>
+
+
+<script>
+    apiKey = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' //cors.sh  api key
+    let station = 'KHUM'
+    
+
+    let xhr = new XMLHttpRequest();
+
+    let url = 'https://proxy.cors.sh/https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=' + station + '&hoursBeforeNow=4'
+     
+    xhr.open('GET', url);
+    xhr.setRequestHeader('x-cors-api-key', apiKey)
+
+    // 3. Send the request over the network
+    xhr.send();
+
+    // 4. This will be called after the response is received
+    xhr.onload = function() {
+        if (xhr.status != 200) { // analyze HTTP status of the response
+            document.getElementById('result').innerHTML = (`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+        } 
+        else { // show the result
+            var xml = xhr.responseXML;
+            var pressures = xml.getElementsByTagName('altim_in_hg')
+            var times = xml.getElementsByTagName('observation_time')
+
+            var barometric = []
+
+            dataText = '<br><br>Barometric Pressures, Newest First:<br>'
+            for (let i = 0; i < pressures.length; i++) {
+                dataText += 'Time (UTC): ' + times[i].childNodes[0].nodeValue + '      ' + pressures[i].childNodes[0].nodeValue + ' inHg<br>';
+                barometric[i] = parseFloat(pressures[i].childNodes[0].nodeValue)
+            }
+            console.log(dataText)
+            document.getElementById('data').innerHTML = dataText;
+
+
+            resultMessage = ''
+            if(barometric[0] > barometric[1]){
+                resultMessage = ('Pressure is Rising, Fish on!')
+            }
+            else if(barometric[0] == barometric[1]){
+                if(barometric[0] >= 29.8){
+                    resultMessage = ('Pressure is Steady and High, Okay Fishing Expected')
+                }
+                else{
+                    resultMessage = ('Pressure is Steady and Low, Don\'t Fish')
+                }
+            }
+            else{
+                resultMessage = ('Pressure is Falling, Don\'t Fish')
+            }
+
+            document.getElementById('result').innerHTML = resultMessage
+
+        }    
+        
+    };
+
+    xhr.onerror = function() {
+        document.getElementById('result').innerHTML = 'Error, Unknown'
+    };
+    
+    
+</script>
+
+
+
+</body>
+</html> 
